@@ -2,7 +2,7 @@
 import argparse
 import datetime
 import requests
-from typing import List
+from typing import List, Tuple
 
 
 def get_token():
@@ -19,37 +19,44 @@ def time_to_int(time: str) -> int:
     return int(h)*60 + int(m)
 
 
-def build_database(data: dict) -> dict:
-    total = {}
+def build_database(data: dict) -> Tuple[dict, dict]:
+    subjects_data = {}
+    # Parse the JSON file
     for d in data:
-        # code = f"{d['codi_assig']}-{d['tipus']}"
         code = d['codi_assig']
-        groups = total.get(code, {})
+        groups = subjects_data.get(code, {})
 
         t_start = int(d["dia_setmana"])*60*24 + time_to_int(d["inici"])
         t_end = t_start + int(d["durada"])*60
 
         total_num = int(d["grup"])
-        group_num = int(d["grup"]) // 10
-        group = groups.get(group_num, {})
+        group_num = total_num // 10
+        subgroup_num = total_num % 10
+        group = groups.get(group_num, {
+            "subgroups": {},
+            "time": []
+        })
 
         if total_num % 10 == 0:
-            group["time"] = {
-                "start": t_start,
-                "end": t_end
-            }
+            group["time"].append((t_start, t_end))
         else:
-            subgroups = group.get("subgroups", {})
-            subgroup = subgroups.get(total_num, [])
-            subgroup.append({
-                "start": t_start,
-                "end": t_end
-            })
-            subgroups[total_num] = subgroup
-            group["subgroups"] = subgroups
+            subgroup = group["subgroups"].get(subgroup_num, [])
+            subgroup.append((t_start, t_end))
+            group["subgroups"][subgroup_num] = subgroup
         groups[group_num] = group
-        total[code] = groups
-    return total
+        subjects_data[code] = groups
+
+    # Post process data and extract all the ids
+    groups = {}
+    for subject_key, subject_data in subjects_data.items():
+        groups_ids = []
+        for group_key, group_data in subject_data.items():
+            if len(group_data["subgroups"]) > 0:
+                groups_ids += [group_key*10 + key for key in group_data["subgroups"].keys()]
+            else:
+                groups_ids.append(group_key*10)
+        groups[subject_key] = groups_ids
+    return subjects_data, groups
 
 
 def get_timetable(year: int, semester: int, courses: List[str]):
