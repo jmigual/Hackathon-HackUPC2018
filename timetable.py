@@ -2,7 +2,7 @@
 import argparse
 import datetime
 import requests
-from typing import List, Tuple
+from typing import List, Tuple, Dict
 
 
 def get_token():
@@ -12,6 +12,27 @@ def get_token():
 
 API_URL = 'https://api.fib.upc.edu/v2/'
 TOKEN = get_token()
+
+
+def overlaps(ranges: List[Tuple[int, int]], new_ranges: List[Tuple[int, int]]) -> bool:
+    for start, end in ranges:
+        for n_start, n_end in new_ranges:
+            if n_start < end or n_end > start:
+                return True
+    return False
+
+
+def get_timetables(courses: dict, groups: dict, ranges: List[Tuple[int, int]]) -> List[Dict[str, int]]:
+    for subject_key, subject_data in courses.items():
+        courses_copy = courses.copy()
+        del courses_copy[subject_key]
+        for group_key, group_data in subject_data.items():
+            if not overlaps(ranges, group_data["time"]):
+                
+
+            if len(group_data["subgroups"]) <= 0:
+                pass
+
 
 
 def time_to_int(time: str) -> int:
