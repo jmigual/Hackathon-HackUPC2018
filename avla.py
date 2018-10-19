@@ -1,7 +1,7 @@
 
 # coding: utf-8
 
-# In[87]:
+# In[89]:
 
 
 import requests
@@ -25,7 +25,7 @@ def lab_image(building):
     labs = json.loads(requests.get(add_id(labs_url)).content)
     
     image_url = labs['imatges'][building]
-    return image_url
+    return add_id(image_url)
 
 def available_labs(building):
     labs_url = 'https://api.fib.upc.edu/v2/laboratoris/?format=json'
