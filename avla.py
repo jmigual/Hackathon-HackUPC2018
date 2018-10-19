@@ -1,7 +1,7 @@
 
 # coding: utf-8
 
-# In[48]:
+# In[87]:
 
 
 import requests
@@ -25,9 +25,17 @@ def lab_image(building):
     labs = json.loads(requests.get(add_id(labs_url)).content)
     
     image_url = labs['imatges'][building]
-    return add_id(image_url)
+    return image_url
 
+def available_labs(building):
+    labs_url = 'https://api.fib.upc.edu/v2/laboratoris/?format=json'
+    labs = json.loads(requests.get(add_id(labs_url)).content)
 
-if __name__=="__main__":
-    print(get_lab_buildings())
+    available = {}
+
+    for avla in labs['results']:
+        places = avla['places_disponibles']
+        if places != None and len(avla['reserves_actuals']) == 0 and places > 0 and avla['id'][:2] == building:
+            available[avla['id']] = avla['places_disponibles']
+    return available
 
