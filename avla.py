@@ -25,5 +25,9 @@ def lab_image(building):
     labs = json.loads(requests.get(add_id(labs_url)).content)
     
     image_url = labs['imatges'][building]
-    return requests.get(add_id(image_url)).content
+    return add_id(image_url)
+
+
+if __name__=="__main__":
+    print(get_lab_buildings())
 

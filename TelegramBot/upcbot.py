@@ -1,12 +1,14 @@
-import timetable
-#!/usr/bin/env python
+import avla
+from PIL import Image
+
+# !/usr/bin/env python
 # -*- coding: utf-8 -*-
 """Basic example for a bot that uses inline keyboards.
 
 # This program is dedicated to the public domain under the CC0 license.
 """
 import logging
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, InputMediaPhoto
 from telegram.ext import Updater, CommandHandler, CallbackQueryHandler
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -14,27 +16,41 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 logger = logging.getLogger(__name__)
 
 
-def start(bot, update):
-    keyboard = [[InlineKeyboardButton("Option 1", callback_data='1'),
-                 InlineKeyboardButton("Option 2", callback_data='2')],
+def getLab(bot, update):
 
-                [InlineKeyboardButton("Option 3", callback_data='3')]]
+    labs = avla.get_lab_buildings()
+
+    n = len(labs)
+
+    line = []
+    for lab in labs:
+        line.append(InlineKeyboardButton(lab, callback_data=lab))
+
+    keyboard = [line]
 
     reply_markup = InlineKeyboardMarkup(keyboard)
 
-    update.message.reply_text('Please choose:', reply_markup=reply_markup)
+    update.message.reply_text('Please choose a lab:', reply_markup=reply_markup)
 
 
 def button(bot, update):
     query = update.callback_query
 
-    bot.edit_message_text(text="Selected option: {}".format(query.data),
-                          chat_id=query.message.chat_id,
-                          message_id=query.message.message_id)
+    if query.message.text == 'Please choose a lab:':
+        bot.delete_message(chat_id=query.message.chat_id,
+                           message_id=query.message.message_id)
+        bot.send_photo(chat_id=query.message.chat_id, photo=avla.lab_image(query.data))
+        # bot.edit_message_(media=avla.lab_image(query.data),
+        #                      chat_id=query.message.chat_id,
+        #                      message_id=query.message.message_id)
 
 
 def help(bot, update):
     update.message.reply_text("Use /start to test this bot.")
+
+
+def biene(bot, update):
+    update.message.reply_text("BIENE")
 
 
 def error(bot, update, error):
@@ -46,9 +62,10 @@ def main():
     # Create the Updater and pass it your bot's token.
     updater = Updater("771476950:AAGTRsrT7Sewj9RxtJevOi5mnM4heM5GR4k")
 
-    updater.dispatcher.add_handler(CommandHandler('start', start))
+    updater.dispatcher.add_handler(CommandHandler('getLab', getLab))
     updater.dispatcher.add_handler(CallbackQueryHandler(button))
     updater.dispatcher.add_handler(CommandHandler('help', help))
+    updater.dispatcher.add_handler(CommandHandler('biene', biene))
     updater.dispatcher.add_error_handler(error)
 
     # Start the Bot
