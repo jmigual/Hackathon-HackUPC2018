@@ -26,16 +26,28 @@ def build_database(data: dict) -> dict:
         code = d['codi_assig']
         groups = total.get(code, {})
 
-        t_start = time_to_int(d["inici"])
+        t_start = int(d["dia_setmana"])*60*24 + time_to_int(d["inici"])
         t_end = t_start + int(d["durada"])*60
 
-        groups[int(d["grup"])] = {
-            "start": t_start,
-            "end": t_end,
-            # "type": d["tipus"],
-            # "aula": d["aules"]
-        }
+        total_num = int(d["grup"])
+        group_num = int(d["grup"]) // 10
+        group = groups.get(group_num, {})
 
+        if total_num % 10 == 0:
+            group["time"] = {
+                "start": t_start,
+                "end": t_end
+            }
+        else:
+            subgroups = group.get("subgroups", {})
+            subgroup = subgroups.get(total_num, [])
+            subgroup.append({
+                "start": t_start,
+                "end": t_end
+            })
+            subgroups[total_num] = subgroup
+            group["subgroups"] = subgroups
+        groups[group_num] = group
         total[code] = groups
     return total
 
