@@ -133,7 +133,7 @@ def build_database(data: dict) -> dict:
     return subjects_data
 
 
-def get_timetable(year: int, semester: int, courses: List[str]) -> Dict[str, int]:
+def get_timetable(year: int, semester: int, courses: List[str], mornings: bool) -> Dict[str, int]:
     date_str = f"{year}Q{semester}"
     res = requests.get(f"{API_URL}quadrimestres/{date_str}/classes/",
                        params={
@@ -148,7 +148,7 @@ def get_timetable(year: int, semester: int, courses: List[str]) -> Dict[str, int
 
     database = build_database(data["results"])
     timetables = get_timetables(database, [], {})
-    scores = get_scores(timetables, database, False)
+    scores = get_scores(timetables, database, mornings)
     print(len(timetables))
     return scores[0][0]
 
@@ -165,8 +165,8 @@ def get_available_courses(year: int, semester: int) -> List[str]:
 
 
 def main(args: dict):
-    get_timetable(2018, 1, ["F", "FM", "IC", "PRO1"])
     get_available_courses(2018, 1)
+    get_timetable(2018, 1, ["F", "FM", "IC", "PRO1"], True)
 
 
 if __name__ == "__main__":
