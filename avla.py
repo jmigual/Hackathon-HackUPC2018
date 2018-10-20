@@ -1,11 +1,12 @@
 
 # coding: utf-8
 
-# In[89]:
+# In[121]:
 
 
 import requests
 import json
+import time
 
 def get_token():
     with open("token.key") as f:
@@ -36,6 +37,14 @@ def available_labs(building):
     for avla in labs['results']:
         places = avla['places_disponibles']
         if places != None and len(avla['reserves_actuals']) == 0 and places > 0 and avla['id'][:2] == building:
-            available[avla['id']] = avla['places_disponibles']
+            date = ''
+            reserves = json.loads(requests.get(add_id(avla['reserves'])).content)
+            for res in reserves['results']:
+                if (time.mktime(time.strptime(res['inici'], time_format)) > time.time()):
+                    date = res['inici']
+                    break
+                    
+            available[avla['id']] = (avla['places_disponibles'], date)
+            
     return available
 
