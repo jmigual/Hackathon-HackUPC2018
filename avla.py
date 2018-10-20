@@ -12,16 +12,20 @@ def get_token():
     with open("token.key") as f:
         return f.readline()
 
+
 TOKEN = get_token()
+
 
 def add_id(url):
     url += '&client_id=' + TOKEN
     return url
 
+
 def get_lab_buildings():
     labs_url = 'https://api.fib.upc.edu/v2/laboratoris/?format=json'
     labs = requests.get(add_id(labs_url)).json()
     return labs['imatges'].keys()
+
 
 def lab_image(building):
     labs_url = 'https://api.fib.upc.edu/v2/laboratoris/?format=json'
@@ -44,7 +48,6 @@ def lab_stats(building):
 
     available = {}
     unavailable = {}
-    
 
     for avla in labs['results']:
         places = avla['places_disponibles']

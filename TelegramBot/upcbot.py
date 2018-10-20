@@ -97,7 +97,7 @@ def button(bot: Bot, update: Update):
     if query.message.text == 'Please choose a lab:':
         # res_wait = bot.send_message(query.message.chat_id,
         #                             text="Please wait while we search for the available labs")
-        res = bot.send_animation(query.message.chat_id, animation=DONUT_PARROT,
+        res = bot.send_animation(chat_id, animation=DONUT_PARROT,
                                  caption="Please wait while we search for the available labs")
 
         K = 25
