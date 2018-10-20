@@ -56,8 +56,7 @@ def parse_messages(bot: Bot, update: Update):
 
     if update.message.text.lower() == "biene":
         update.message.reply_text("BIENE")
-        ret = bot.send_animation(chat_id=chat_id, animation=PARTY_PARROT)
-        print(ret)
+        bot.send_animation(chat_id=chat_id, animation=PARTY_PARROT)
         return
 
     if not waiting_timetable:
@@ -92,10 +91,14 @@ def parse_messages(bot: Bot, update: Update):
     waiting_timetable = False
 
 
-def button(bot, update):
+def button(bot: Bot, update: Update):
     query = update.callback_query
 
     if query.message.text == 'Please choose a lab:':
+        res_wait = bot.send_message(query.message.chat_id,
+                                    text="Please wait while we search for the available labs")
+        res = bot.send_animation(query.message.chat_id, animation=DONUT_PARROT)
+
         K = 25
         caption = joinStrings("Sales lliures:", "Sales ocupades:", K) + "\n"
         available, unavailable = avla.lab_stats(query.data)
@@ -113,12 +116,14 @@ def button(bot, update):
         unavailableOutput += [""] * (n_lines - len(unavailableOutput))
         caption += "\n".join(joinStrings(a, b, K) for a, b in zip(availableOutput, unavailableOutput))
 
+        bot.delete_message(chat_id=query.message.chat_id,
+                           message_id=query.message.message_id)
+        bot.delete_message(chat_id=query.message.chat_id, message_id=res.message_id)
+        bot.delete_message(chat_id=query.message.chat_id, message_id=res_wait.message_id)
         bot.send_photo(chat_id=query.message.chat_id,
                        photo=avla.lab_image(query.data),
                        caption=caption,
                        parse_mode="MARKDOWN")
-        bot.delete_message(chat_id=query.message.chat_id,
-                           message_id=query.message.message_id)
 
         # bot.edit_message_(media=avla.lab_image(query.data),
         #                      chat_id=query.message.chat_id,
@@ -129,8 +134,9 @@ def help(bot, update):
     update.message.reply_text("Use /start to test this bot.")
 
 
-def biene(bot, update):
+def biene(bot, update: Update):
     update.message.reply_text("BIENE")
+    bot.send_animation(chat_id=update.message.chat.id, animation=PARTY_PARROT)
 
 
 def error(bot, update, error):
