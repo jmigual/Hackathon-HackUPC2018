@@ -1,7 +1,7 @@
 
 # coding: utf-8
 
-# In[149]:
+# In[158]:
 
 
 import requests
@@ -48,18 +48,23 @@ def lab_stats(building):
         if places != None and places > 0 and avla['id'][:2] == building:
             date = ''
             reserves = json.loads(requests.get(add_id(avla['reserves'])+inici).content)
+            
             if len(avla['reserves_actuals']) == 0:
                 for res in reserves['results']:
-                    if (time.mktime(time.strptime(res['inici'], time_format)) > time.time()):
-                        date = res['inici']
+                    ini = time.strptime(res['inici'], time_format)
+                    if time.mktime(ini) > time.time():
+                        if ini.tm_mday == time.localtime().tm_mday:
+                            date = time.strftime('%H:%M',ini)
                         break
 
                 available[avla['id']] = (avla['places_disponibles'], date)
                 
             else:
                 for res in reserves['results']:
-                    if (time.mktime(time.strptime(res['fi'], time_format)) > time.time()):
-                        date = res['fi']
+                    fi = time.strptime(res['fi'], time_format)
+                    if time.mktime(fi) > time.time():
+                        if fi.tm_mday == time.localtime().tm_mday:
+                            date = time.strftime('%H:%M',fi)
                         break
 
                 unavailable[avla['id']] = (res['titol'], date)
