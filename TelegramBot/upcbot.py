@@ -108,11 +108,11 @@ def button(bot: Bot, update: Update):
         caption += "\n".join(joinStrings(a, b, K) for a, b in zip(availableOutput, unavailableOutput))
 
         bot.delete_message(chat_id=chat_id, message_id=message_id)
-        bot.delete_message(chat_id=chat_id, message_id=res.message_id)
         bot.send_photo(chat_id=chat_id,
                        photo=avla.lab_image(query.data),
                        caption=caption,
                        parse_mode="MARKDOWN")
+        bot.delete_message(chat_id=chat_id, message_id=res.message_id)
 
     elif query.message.text == 'Select the desired semester':
         selected_semester = query.data
