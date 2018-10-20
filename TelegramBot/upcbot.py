@@ -27,7 +27,6 @@ program = re.compile(r"(\d{4})Q(\d) *(\w+(?: *, *\w+)*)")
 
 
 def get_lab(bot, update):
-
     labs = avla.get_lab_buildings()
 
     n = len(labs)
@@ -54,8 +53,7 @@ def parse_messages(bot: Bot, update: Update):
     chat_id = update.message.chat.id
 
     if update.message.text.lower() == "biene":
-        update.message.reply_text("BIENE")
-        bot.send_animation(chat_id=chat_id, animation=PARTY_PARROT)
+        bot.send_animation(chat_id=chat_id, animation=PARTY_PARROT, caption="BIENE")
         return
 
     if not waiting_timetable:
@@ -94,9 +92,10 @@ def button(bot: Bot, update: Update):
     query = update.callback_query
 
     if query.message.text == 'Please choose a lab:':
-        res_wait = bot.send_message(query.message.chat_id,
-                                    text="Please wait while we search for the available labs")
-        res = bot.send_animation(query.message.chat_id, animation=DONUT_PARROT)
+        # res_wait = bot.send_message(query.message.chat_id,
+        #                             text="Please wait while we search for the available labs")
+        res = bot.send_animation(query.message.chat_id, animation=DONUT_PARROT,
+                                 caption="Please wait while we search for the available labs")
 
         K = 25
         caption = joinStrings("Sales lliures:", "Sales ocupades:", K) + "\n"
@@ -117,12 +116,11 @@ def button(bot: Bot, update: Update):
 
         bot.delete_message(chat_id=query.message.chat_id,
                            message_id=query.message.message_id)
-        bot.delete_message(chat_id=query.message.chat_id, message_id=res.message_id)
-        bot.delete_message(chat_id=query.message.chat_id, message_id=res_wait.message_id)
         bot.send_photo(chat_id=query.message.chat_id,
                        photo=avla.lab_image(query.data),
                        caption=caption,
                        parse_mode="MARKDOWN")
+        bot.delete_message(chat_id=query.message.chat_id, message_id=res.message_id)
 
         # bot.edit_message_(media=avla.lab_image(query.data),
         #                      chat_id=query.message.chat_id,
@@ -134,8 +132,7 @@ def help(bot, update):
 
 
 def biene(bot, update: Update):
-    update.message.reply_text("BIENE")
-    bot.send_animation(chat_id=update.message.chat.id, animation=PARTY_PARROT)
+    bot.send_animation(chat_id=update.message.chat.id, animation=PARTY_PARROT, caption="BIENE")
 
 
 def error(bot, update, error):
