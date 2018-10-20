@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 import argparse
-import datetime
 import requests
 from typing import List, Tuple, Dict
 
@@ -14,11 +13,46 @@ API_URL = 'https://api.fib.upc.edu/v2/'
 TOKEN = get_token()
 
 
+def ranges_to_score(ranges: List[List[Tuple[int, int]]], mornings: bool) -> int:
+    pass
+
+
+def convert_to_ranges(timetable: Dict[str, int], courses: dict) -> List[List[Tuple[int, int]]]:
+    total = []
+    for course_key, course_group in timetable.items():
+        group_num = course_group // 10
+        subgroup_num = course_group % 10
+        print(group_num, subgroup_num)
+        print(courses[course_key][group_num])
+        total += courses[course_key][group_num]["time"]
+
+        if subgroup_num != 0:
+            total += courses[course_key][group_num]["subgroups"][subgroup_num]
+
+    total_days = [[] for _ in range(7)]
+
+    for r_start, r_end in total:
+        day = r_start // 60*24
+        r_start -= day*60*24
+        r_end -= day*60*24
+        total_days[day].append(r_start, r_end)
+    return total_days
+
+
+def get_scores(timetables: List[Dict[str, int]], courses: dict, mornings: bool) -> List[Tuple[Dict[str, int], int]]:
+    result = []
+    for timetable in timetables:
+        ranges = convert_to_ranges(timetable, courses)
+        score = ranges_to_score(ranges, mornings)
+        result.append((timetable, score))
+        exit(0)
+    return result
+
+
 def overlaps(ranges: List[Tuple[int, int]], new_ranges: List[Tuple[int, int]]) -> bool:
     for start, end in ranges:
         for n_start, n_end in new_ranges:
             if start <= n_start < end or start < n_end <= end:
-                # print(ranges, new_ranges, n_start, end, n_end, start)
                 return True
     return False
 
@@ -31,21 +65,19 @@ def get_timetables(courses: dict, ranges: List[Tuple[int, int]], groups: dict) -
     courses_copy = courses.copy()
     subject_key, subject_data = courses_copy.popitem()
     for group_key, group_data in subject_data.items():
-        # print(group_key, len(group_data["subgroups"]))
         group_time = group_data["time"]
         if overlaps(ranges, group_time):
             continue
         new_ranges = ranges + group_time
 
         if len(group_data["subgroups"]) <= 0:
-            result += get_timetables(courses_copy, new_ranges, {**groups, subject_key: group_key * 10})
+            result += get_timetables(courses_copy, new_ranges, {**groups, subject_key: group_key*10})
         else:
             for subgroup_key, subgroup_data in group_data["subgroups"].items():
                 if overlaps(new_ranges, subgroup_data):
-                    # print(new_ranges, subgroup_data)
                     continue
                 result += get_timetables(courses_copy, new_ranges + subgroup_data,
-                                         {**groups, subject_key: (group_key * 10 + subgroup_key)})
+                                         {**groups, subject_key: (group_key*10 + subgroup_key)})
 
     return result
 
@@ -100,7 +132,7 @@ def get_timetable(year: int, semester: int, courses: List[str]):
 
     database = build_database(data["results"])
     timetables = get_timetables(database, [], {})
-    print(timetables)
+    scores = get_scores(timetables, courses, True)
     print(len(timetables))
 
 
@@ -116,7 +148,7 @@ def get_available_courses(year: int, semester: int) -> List[str]:
 
 
 def main(args: dict):
-    get_timetable(2018, 1, ["F", "FM", "IC", "PRO1", "APA", "PAR", "EC", "IA"])
+    get_timetable(2018, 1, ["F", "FM", "IC", "PRO1"])
     get_available_courses(2018, 1)
 
 
