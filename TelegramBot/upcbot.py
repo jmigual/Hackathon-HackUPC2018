@@ -36,15 +36,17 @@ def button(bot, update):
     query = update.callback_query
 
     if query.message.text == 'Please choose a lab:':
-        K = 20
-        caption = joinStrings("Sales lliures:", "Sales ocupades:", K)+"\n"
+        K = 25
+        caption = joinStrings("Sales lliures:", "Sales ocupades:", K) + "\n"
         available, unavailable = avla.lab_stats(query.data)
         availableOutput = []
         unavailableOutput = []
         for k, i in sorted(available.items(), key=lambda kv: kv[1][0], reverse=True):
-            availableOutput.append("*{}*: {} _(until {})_".format(k, i[0], i[1]))
-        for k, i in sorted(available.items(), key=lambda kv: kv[1][1]):
-            unavailableOutput.append("*{}*: {} _(until {})_".format(k, i[0], i[1]))
+            availableOutput.append(
+                "*{}*: {} {}".format(k[2:], i[0], "_(fins {})_".format(i[1]) if len(i[1]) > 0 else ""))
+        for k, i in sorted(unavailable.items(), key=lambda kv: kv[1][1]):
+            unavailableOutput.append(
+                "*{}*: {} {}".format(k[2:], i[0], "_(fins {})_".format(i[1]) if len(i[1]) > 0 else ""))
 
         n_lines = max(len(availableOutput), len(unavailableOutput))
         availableOutput += [""] * (n_lines - len(availableOutput))
