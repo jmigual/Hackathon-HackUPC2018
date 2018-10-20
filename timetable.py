@@ -14,7 +14,23 @@ TOKEN = get_token()
 
 
 def ranges_to_score(ranges: List[List[Tuple[int, int]]], mornings: bool) -> int:
-    pass
+    empty_days = 0
+    score = 0
+    for day in ranges:
+        if len(day) <= 0:
+            empty_days += 1
+
+        last = None
+        for r_start, r_end in day:
+            day_score = r_end - r_start
+            if not mornings:
+                day_score = 60*24 - day_score
+
+            score += day_score
+            if last is not None:
+                score += 4*(r_start - last)
+            last = r_end
+    return score
 
 
 def convert_to_ranges(timetable: Dict[str, int], courses: dict) -> List[List[Tuple[int, int]]]:
@@ -22,20 +38,20 @@ def convert_to_ranges(timetable: Dict[str, int], courses: dict) -> List[List[Tup
     for course_key, course_group in timetable.items():
         group_num = course_group // 10
         subgroup_num = course_group % 10
-        print(group_num, subgroup_num)
-        print(courses[course_key][group_num])
         total += courses[course_key][group_num]["time"]
 
         if subgroup_num != 0:
             total += courses[course_key][group_num]["subgroups"][subgroup_num]
 
-    total_days = [[] for _ in range(7)]
+    total_days: List[List[Tuple[int, int]]] = [[] for _ in range(7)]
 
     for r_start, r_end in total:
-        day = r_start // 60*24
+        day = r_start // (60*24)
         r_start -= day*60*24
         r_end -= day*60*24
-        total_days[day].append(r_start, r_end)
+        total_days[day].append((r_start, r_end))
+    for day in total_days:
+        day.sort(key=lambda x: x[0])
     return total_days
 
 
@@ -45,7 +61,7 @@ def get_scores(timetables: List[Dict[str, int]], courses: dict, mornings: bool) 
         ranges = convert_to_ranges(timetable, courses)
         score = ranges_to_score(ranges, mornings)
         result.append((timetable, score))
-        exit(0)
+    result.sort(key=lambda x: x[1])
     return result
 
 
@@ -117,7 +133,7 @@ def build_database(data: dict) -> dict:
     return subjects_data
 
 
-def get_timetable(year: int, semester: int, courses: List[str]):
+def get_timetable(year: int, semester: int, courses: List[str]) -> Dict[str, int]:
     date_str = f"{year}Q{semester}"
     res = requests.get(f"{API_URL}quadrimestres/{date_str}/classes/",
                        params={
@@ -132,8 +148,9 @@ def get_timetable(year: int, semester: int, courses: List[str]):
 
     database = build_database(data["results"])
     timetables = get_timetables(database, [], {})
-    scores = get_scores(timetables, courses, True)
+    scores = get_scores(timetables, database, False)
     print(len(timetables))
+    return scores[0][0]
 
 
 def get_available_courses(year: int, semester: int) -> List[str]:
