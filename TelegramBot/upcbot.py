@@ -7,7 +7,7 @@
 import logging
 import re
 
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Bot, Update
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, InputMediaPhoto, Bot, Update, ChatAction
 from telegram.ext import Updater, CommandHandler, CallbackQueryHandler, MessageHandler, Filters
 from emoji import emojize
 
@@ -25,7 +25,11 @@ selected_semester = None
 courses_program = re.compile(r"(\w+(?: *, *\w+)*)")
 
 
-def get_lab(bot, update):
+def get_lab(bot: Bot, update: Update):
+    # query = update.callback_query
+    chat_id = update.message.chat.id
+    bot.send_chat_action(chat_id, ChatAction.TYPING)
+
     labs = avla.get_lab_buildings()
     line = [InlineKeyboardButton(lab, callback_data=lab) for lab in labs]
     reply_markup = InlineKeyboardMarkup([line])
@@ -34,6 +38,8 @@ def get_lab(bot, update):
 
 def get_timetable(bot, update: Update):
     global selected_semester
+    chat_id = update.message.chat.id
+    bot.send_chat_action(chat_id, ChatAction.TYPING)
 
     semesters = timetable.get_semesters()
     buttons = [[InlineKeyboardButton(t, callback_data=t)] for t in semesters]
@@ -68,6 +74,7 @@ def parse_messages(bot: Bot, update: Update):
 
     res = bot.send_animation(chat_id=chat_id, animation=DONUT_PARROT,
                              caption="Please wait while we search the timetables")
+    bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
     table = timetable.get_timetable(selected_semester, courses, True)
     bot.delete_message(chat_id=chat_id, message_id=res.message_id)
 
@@ -85,10 +92,10 @@ def button(bot: Bot, update: Update):
     message_id = query.message.message_id
 
     if query.message.text == 'Please choose a lab:':
-        # res_wait = bot.send_message(query.message.chat_id,
-        #                             text="Please wait while we search for the available labs")
+        bot.delete_message(chat_id=chat_id, message_id=message_id)
         res = bot.send_animation(chat_id, animation=DONUT_PARROT,
                                  caption="Please wait while we search for the available labs")
+        bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
 
         K = 25
         caption = joinStrings("Sales lliures:", "Sales ocupades:", K) + "\n"
@@ -107,12 +114,9 @@ def button(bot: Bot, update: Update):
         unavailableOutput += [""] * (n_lines - len(unavailableOutput))
         caption += "\n".join(joinStrings(a, b, K) for a, b in zip(availableOutput, unavailableOutput))
 
-        bot.delete_message(chat_id=chat_id, message_id=message_id)
-        bot.send_photo(chat_id=chat_id,
-                       photo=avla.lab_image(query.data),
-                       caption=caption,
-                       parse_mode="MARKDOWN")
-        bot.delete_message(chat_id=chat_id, message_id=res.message_id)
+        bot.edit_message_media(chat_id=chat_id, message_id=res.message_id,
+                               media=InputMediaPhoto(avla.lab_image(query.data),
+                                                     caption=caption, parse_mode="MARKDOWN"))
 
     elif query.message.text == 'Select the desired semester':
         selected_semester = query.data
