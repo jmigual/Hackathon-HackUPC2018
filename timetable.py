@@ -150,7 +150,9 @@ def get_timetable(year: int, semester: int, courses: List[str], mornings: bool) 
     timetables = get_timetables(database, [], {})
     scores = get_scores(timetables, database, mornings)
     print(len(timetables))
-    return scores[0][0]
+    if len(scores) > 0:
+        return scores[0][0]
+    return {}
 
 
 def get_available_courses(year: int, semester: int) -> List[str]:
@@ -162,6 +164,15 @@ def get_available_courses(year: int, semester: int) -> List[str]:
                        })
     print(res.request.path_url)
     return res.json()["results"]
+
+
+def timetable_to_url(timetable: Dict[str, int]) -> str:
+    base_url = "https://www.fib.upc.edu/ca/estudis/graus/grau-en-enginyeria-informatica/horaris?class=true"
+    for key, value in timetable.items():
+        group = value - (value % 10)
+        base_url += f"&a={key}_{value}&a={key}_{group}"
+
+    return base_url
 
 
 def main(args: dict):
