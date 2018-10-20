@@ -36,10 +36,20 @@ def button(bot, update):
     query = update.callback_query
 
     if query.message.text == 'Please choose a lab:':
-        caption = "__Sales lliures:\n"
-        d=avla.available_labs(query.data)
-        for k, i in sorted(d.items(), key=lambda kv: kv[1], reverse=True):
-            caption += "*{}*: {}\n".format(k, i)
+        K = 20
+        caption = joinStrings("Sales lliures:", "Sales ocupades:", K)+"\n"
+        available, unavailable = avla.lab_stats(query.data)
+        availableOutput = []
+        unavailableOutput = []
+        for k, i in sorted(available.items(), key=lambda kv: kv[1][0], reverse=True):
+            availableOutput.append("*{}*: {} _(until {})_".format(k, i[0], i[1]))
+        for k, i in sorted(available.items(), key=lambda kv: kv[1][1]):
+            unavailableOutput.append("*{}*: {} _(until {})_".format(k, i[0], i[1]))
+
+        n_lines = max(len(availableOutput), len(unavailableOutput))
+        availableOutput += [""] * (n_lines - len(availableOutput))
+        unavailableOutput += [""] * (n_lines - len(unavailableOutput))
+        caption += "\n".join(joinStrings(a, b, K) for a, b in zip(availableOutput, unavailableOutput))
 
         bot.send_photo(chat_id=query.message.chat_id,
                        photo=avla.lab_image(query.data),
@@ -82,6 +92,10 @@ def main():
     # Run the bot until the user presses Ctrl-C or the process receives SIGINT,
     # SIGTERM or SIGABRT
     updater.idle()
+
+
+def joinStrings(a, b, n):
+    return a + " " * (n - len(a)) + b
 
 
 if __name__ == '__main__':
