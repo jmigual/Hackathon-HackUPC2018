@@ -51,7 +51,6 @@ def get_timetable(bot, update):
 
 def parse_messages(bot: Bot, update: Update):
     global waiting_timetable
-    print(update)
     chat_id = update.message.chat.id
 
     if update.message.text.lower() == "biene":
