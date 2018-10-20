@@ -7,7 +7,7 @@ from typing import List, Tuple, Dict
 
 def get_token():
     with open("token.key") as f:
-        return f.readline()
+        return f.readline().replace("\n", "")
 
 
 API_URL = 'https://api.fib.upc.edu/v2/'
