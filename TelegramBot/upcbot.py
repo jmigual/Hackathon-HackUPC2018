@@ -96,9 +96,30 @@ def button(bot, update):
     query = update.callback_query
 
     if query.message.text == 'Please choose a lab:':
+        K = 25
+        caption = joinStrings("Sales lliures:", "Sales ocupades:", K) + "\n"
+        available, unavailable = avla.lab_stats(query.data)
+        availableOutput = []
+        unavailableOutput = []
+        for k, i in sorted(available.items(), key=lambda kv: kv[1][0], reverse=True):
+            availableOutput.append(
+                "*{}*: {} {}".format(k[2:], i[0], "_(fins {})_".format(i[1]) if len(i[1]) > 0 else ""))
+        for k, i in sorted(unavailable.items(), key=lambda kv: kv[1][1]):
+            unavailableOutput.append(
+                "*{}*: {} {}".format(k[2:], i[0], "_(fins {})_".format(i[1]) if len(i[1]) > 0 else ""))
+
+        n_lines = max(len(availableOutput), len(unavailableOutput))
+        availableOutput += [""] * (n_lines - len(availableOutput))
+        unavailableOutput += [""] * (n_lines - len(unavailableOutput))
+        caption += "\n".join(joinStrings(a, b, K) for a, b in zip(availableOutput, unavailableOutput))
+
+        bot.send_photo(chat_id=query.message.chat_id,
+                       photo=avla.lab_image(query.data),
+                       caption=caption,
+                       parse_mode="MARKDOWN")
         bot.delete_message(chat_id=query.message.chat_id,
                            message_id=query.message.message_id)
-        bot.send_photo(chat_id=query.message.chat_id, photo=avla.lab_image(query.data))
+
         # bot.edit_message_(media=avla.lab_image(query.data),
         #                      chat_id=query.message.chat_id,
         #                      message_id=query.message.message_id)
@@ -136,6 +157,10 @@ def main():
     # Run the bot until the user presses Ctrl-C or the process receives SIGINT,
     # SIGTERM or SIGABRT
     updater.idle()
+
+
+def joinStrings(a, b, n):
+    return a + " " * (n - len(a)) + b
 
 
 if __name__ == '__main__':
