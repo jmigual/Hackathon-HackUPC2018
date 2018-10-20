@@ -11,7 +11,7 @@ import time
 
 def get_token():
     with open("token.key") as f:
-        return f.readline()
+        return f.readline().replace("\n", "")
 
 
 TOKEN = get_token()
