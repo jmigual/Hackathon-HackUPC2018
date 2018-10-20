@@ -7,7 +7,7 @@
 import logging
 import re
 
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, InputMediaPhoto
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, InputMediaPhoto, Bot, Update
 from telegram.ext import Updater, CommandHandler, CallbackQueryHandler, MessageHandler, Filters
 from PIL import Image
 from emoji import emojize
@@ -19,11 +19,14 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
                     level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+DONUT_PARROT = 'CgADBAADwgMAAiRlWVKCtPYHjtSx-QI'
+PARTY_PARROT = 'CgADBAADxgMAAiRlWVK7Oa85OWrCqAI'
+
 waiting_timetable = False
 program = re.compile(r"(\d{4})Q(\d) *(\w+(?: *, *\w+)*)")
 
 
-def getLab(bot, update):
+def get_lab(bot, update):
 
     labs = avla.get_lab_buildings()
 
@@ -46,8 +49,17 @@ def get_timetable(bot, update):
     waiting_timetable = True
 
 
-def parse_messages(bot, update):
+def parse_messages(bot: Bot, update: Update):
     global waiting_timetable
+    print(update)
+    chat_id = update.message.chat.id
+
+    if update.message.text.lower() == "biene":
+        update.message.reply_text("BIENE")
+        ret = bot.send_animation(chat_id=chat_id, animation=PARTY_PARROT)
+        print(ret)
+        return
+
     if not waiting_timetable:
         return
 
@@ -61,6 +73,7 @@ def parse_messages(bot, update):
     semester = int(m.group(2))
     courses = [s.strip() for s in m.group(3).split(",")]
 
+    update.message.reply_text(f"Please wait while we search the timetables")
     available_courses = timetable.get_available_courses(year, semester)
     difference = set(courses) - set(available_courses)
     if len(difference) > 0:
@@ -68,7 +81,9 @@ def parse_messages(bot, update):
                                   f"Please send them again")
         return
 
+    res = bot.send_animation(chat_id=chat_id, animation=DONUT_PARROT)
     table = timetable.get_timetable(year, semester, courses, True)
+    bot.delete_message(chat_id=chat_id, message_id=res.message_id)
 
     if len(table) <= 0:
         update.message.reply_text(emojize("Sorry! No timetable found :cry:", use_aliases=True))
@@ -106,7 +121,7 @@ def main():
     # Create the Updater and pass it your bot's token.
     updater = Updater("771476950:AAGTRsrT7Sewj9RxtJevOi5mnM4heM5GR4k")
 
-    updater.dispatcher.add_handler(CommandHandler('getLab', getLab))
+    updater.dispatcher.add_handler(CommandHandler('get_lab', get_lab))
     updater.dispatcher.add_handler(CallbackQueryHandler(button))
     updater.dispatcher.add_handler(CommandHandler('help', help))
     updater.dispatcher.add_handler(CommandHandler('biene', biene))
