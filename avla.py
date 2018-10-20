@@ -1,7 +1,7 @@
 
 # coding: utf-8
 
-# In[158]:
+# In[192]:
 
 
 import requests
@@ -10,20 +10,22 @@ import time
 
 def get_token():
     with open("token.key") as f:
-        return f.readline().replace("\n", "")  # Return without line endings
-    
+        return f.readline()
+
+TOKEN = get_token()
+
 def add_id(url):
-    url += '&client_id=' + get_token()
+    url += '&client_id=' + TOKEN
     return url
 
 def get_lab_buildings():
     labs_url = 'https://api.fib.upc.edu/v2/laboratoris/?format=json'
-    labs = json.loads(requests.get(add_id(labs_url)).content)
+    labs = requests.get(add_id(labs_url)).json()
     return labs['imatges'].keys()
 
 def lab_image(building):
     labs_url = 'https://api.fib.upc.edu/v2/laboratoris/?format=json'
-    labs = json.loads(requests.get(add_id(labs_url)).content)
+    labs = requests.get(add_id(labs_url)).json()
     
     image_url = labs['imatges'][building]
     return add_id(image_url)
@@ -35,19 +37,20 @@ def lab_image(building):
 
 def lab_stats(building):
     labs_url = 'https://api.fib.upc.edu/v2/laboratoris/?format=json'
-    labs = json.loads(requests.get(add_id(labs_url)).content)
+    labs = requests.get(add_id(labs_url)).json()
     
     time_format = '%Y-%m-%dT%H:%M:%S'
     inici = '&data_inici=' + time.strftime('%Y-%m-%d')
 
     available = {}
     unavailable = {}
+    
 
     for avla in labs['results']:
         places = avla['places_disponibles']
         if places != None and places > 0 and avla['id'][:2] == building:
             date = ''
-            reserves = json.loads(requests.get(add_id(avla['reserves'])+inici).content)
+            reserves = requests.get(add_id(avla['reserves'])+inici).json()
             
             if len(avla['reserves_actuals']) == 0:
                 for res in reserves['results']:
@@ -68,6 +71,5 @@ def lab_stats(building):
                         break
 
                 unavailable[avla['id']] = (res['titol'], date)
-            
     return available, unavailable
 

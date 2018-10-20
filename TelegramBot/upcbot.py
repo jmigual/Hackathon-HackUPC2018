@@ -27,7 +27,6 @@ courses_program = re.compile(r"(\w+(?: *, *\w+)*)")
 
 
 def get_lab(bot, update):
-
     labs = avla.get_lab_buildings()
 
     n = len(labs)
@@ -56,8 +55,7 @@ def parse_messages(bot: Bot, update: Update):
     chat_id = update.message.chat.id
 
     if update.message.text.lower() == "biene":
-        update.message.reply_text("BIENE")
-        bot.send_animation(chat_id=chat_id, animation=PARTY_PARROT)
+        bot.send_animation(chat_id=chat_id, animation=PARTY_PARROT, caption="BIENE")
         return
 
     if selected_semester is None:
@@ -71,7 +69,6 @@ def parse_messages(bot: Bot, update: Update):
 
     courses = [s.strip() for s in m.group(1).split(",")]
 
-    update.message.reply_text(f"Please wait while we search the timetables")
     available_courses = timetable.get_available_courses(selected_semester)
     difference = set(courses) - set(available_courses)
     if len(difference) > 0:
@@ -79,7 +76,8 @@ def parse_messages(bot: Bot, update: Update):
                                   f"Please send them again")
         return
 
-    res = bot.send_animation(chat_id=chat_id, animation=DONUT_PARROT)
+    res = bot.send_animation(chat_id=chat_id, animation=DONUT_PARROT,
+                             caption="Please wait while we search the timetables")
     table = timetable.get_timetable(selected_semester, courses, True)
     bot.delete_message(chat_id=chat_id, message_id=res.message_id)
 
@@ -94,11 +92,13 @@ def button(bot: Bot, update: Update):
     global selected_semester
     query = update.callback_query
     chat_id = query.message.chat_id
+    message_id = query.message.message_id
 
     if query.message.text == 'Please choose a lab:':
-        res_wait = bot.send_message(chat_id,
-                                    text="Please wait while we search for the available labs")
-        res = bot.send_animation(chat_id, animation=DONUT_PARROT)
+        # res_wait = bot.send_message(query.message.chat_id,
+        #                             text="Please wait while we search for the available labs")
+        res = bot.send_animation(query.message.chat_id, animation=DONUT_PARROT,
+                                 caption="Please wait while we search for the available labs")
 
         K = 25
         caption = joinStrings("Sales lliures:", "Sales ocupades:", K) + "\n"
@@ -117,17 +117,16 @@ def button(bot: Bot, update: Update):
         unavailableOutput += [""] * (n_lines - len(unavailableOutput))
         caption += "\n".join(joinStrings(a, b, K) for a, b in zip(availableOutput, unavailableOutput))
 
-        bot.delete_message(chat_id=query.message.chat_id,
-                           message_id=query.message.message_id)
-        bot.delete_message(chat_id=query.message.chat_id, message_id=res.message_id)
-        bot.delete_message(chat_id=query.message.chat_id, message_id=res_wait.message_id)
-        bot.send_photo(chat_id=query.message.chat_id,
+        bot.delete_message(chat_id=chat_id, message_id=message_id)
+        bot.delete_message(chat_id=chat_id, message_id=res.message_id)
+        bot.send_photo(chat_id=chat_id,
                        photo=avla.lab_image(query.data),
                        caption=caption,
                        parse_mode="MARKDOWN")
 
     elif query.message.text == 'Select the desired semester':
         selected_semester = query.data
+        bot.delete_message(chat_id=chat_id, message_id=message_id)
         bot.send_message(chat_id, text="Please the courses IDs separated by commas")
 
 
@@ -136,8 +135,7 @@ def help(bot, update):
 
 
 def biene(bot, update: Update):
-    update.message.reply_text("BIENE")
-    bot.send_animation(chat_id=update.message.chat.id, animation=PARTY_PARROT)
+    bot.send_animation(chat_id=update.message.chat.id, animation=PARTY_PARROT, caption="BIENE")
 
 
 def error(bot, update, error):
