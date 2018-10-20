@@ -17,7 +17,6 @@ logger = logging.getLogger(__name__)
 
 
 def getLab(bot, update):
-
     labs = avla.get_lab_buildings()
 
     n = len(labs)
@@ -37,9 +36,18 @@ def button(bot, update):
     query = update.callback_query
 
     if query.message.text == 'Please choose a lab:':
+        caption = "__Sales lliures:\n"
+        d=avla.available_labs(query.data)
+        for k, i in sorted(d.items(), key=lambda kv: kv[1], reverse=True):
+            caption += "*{}*: {}\n".format(k, i)
+
+        bot.send_photo(chat_id=query.message.chat_id,
+                       photo=avla.lab_image(query.data),
+                       caption=caption,
+                       parse_mode="MARKDOWN")
         bot.delete_message(chat_id=query.message.chat_id,
                            message_id=query.message.message_id)
-        bot.send_photo(chat_id=query.message.chat_id, photo=avla.lab_image(query.data))
+
         # bot.edit_message_(media=avla.lab_image(query.data),
         #                      chat_id=query.message.chat_id,
         #                      message_id=query.message.message_id)
