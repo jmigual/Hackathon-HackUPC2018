@@ -8,6 +8,7 @@ import requests
 import json
 import time
 
+
 def get_token():
     with open("token.key") as f:
         return f.readline()

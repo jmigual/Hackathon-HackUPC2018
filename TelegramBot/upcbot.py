@@ -7,9 +7,8 @@
 import logging
 import re
 
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, InputMediaPhoto, Bot, Update
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Bot, Update
 from telegram.ext import Updater, CommandHandler, CallbackQueryHandler, MessageHandler, Filters
-from PIL import Image
 from emoji import emojize
 
 import avla
@@ -28,17 +27,8 @@ courses_program = re.compile(r"(\w+(?: *, *\w+)*)")
 
 def get_lab(bot, update):
     labs = avla.get_lab_buildings()
-
-    n = len(labs)
-
-    line = []
-    for lab in labs:
-        line.append(InlineKeyboardButton(lab, callback_data=lab))
-
-    keyboard = [line]
-
-    reply_markup = InlineKeyboardMarkup(keyboard)
-
+    line = [InlineKeyboardButton(lab, callback_data=lab) for lab in labs]
+    reply_markup = InlineKeyboardMarkup([line])
     update.message.reply_text('Please choose a lab:', reply_markup=reply_markup)
 
 
