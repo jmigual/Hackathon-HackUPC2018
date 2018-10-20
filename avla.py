@@ -10,7 +10,7 @@ import time
 
 def get_token():
     with open("token.key") as f:
-        return f.readline()
+        return f.readline().replace("\n", "") # Return without line endings
     
 def add_id(url):
     url += '&client_id=' + get_token()
