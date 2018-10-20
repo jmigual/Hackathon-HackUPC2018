@@ -17,22 +17,37 @@ TOKEN = get_token()
 def overlaps(ranges: List[Tuple[int, int]], new_ranges: List[Tuple[int, int]]) -> bool:
     for start, end in ranges:
         for n_start, n_end in new_ranges:
-            if n_start < end or n_end > start:
+            if start <= n_start < end or start < n_end <= end:
+                # print(ranges, new_ranges, n_start, end, n_end, start)
                 return True
     return False
 
 
-def get_timetables(courses: dict, groups: dict, ranges: List[Tuple[int, int]]) -> List[Dict[str, int]]:
-    for subject_key, subject_data in courses.items():
-        courses_copy = courses.copy()
-        del courses_copy[subject_key]
-        for group_key, group_data in subject_data.items():
-            if not overlaps(ranges, group_data["time"]):
-                
+def get_timetables(courses: dict, ranges: List[Tuple[int, int]], groups: dict) -> List[Dict[str, int]]:
+    if len(courses) <= 0:
+        return [groups]
 
-            if len(group_data["subgroups"]) <= 0:
-                pass
+    result = []
+    courses_copy = courses.copy()
+    subject_key, subject_data = courses_copy.popitem()
+    for group_key, group_data in subject_data.items():
+        # print(group_key, len(group_data["subgroups"]))
+        group_time = group_data["time"]
+        if overlaps(ranges, group_time):
+            continue
+        new_ranges = ranges + group_time
 
+        if len(group_data["subgroups"]) <= 0:
+            result += get_timetables(courses_copy, new_ranges, {**groups, subject_key: group_key * 10})
+        else:
+            for subgroup_key, subgroup_data in group_data["subgroups"].items():
+                if overlaps(new_ranges, subgroup_data):
+                    # print(new_ranges, subgroup_data)
+                    continue
+                result += get_timetables(courses_copy, new_ranges + subgroup_data,
+                                         {**groups, subject_key: (group_key * 10 + subgroup_key)})
+
+    return result
 
 
 def time_to_int(time: str) -> int:
@@ -40,7 +55,7 @@ def time_to_int(time: str) -> int:
     return int(h)*60 + int(m)
 
 
-def build_database(data: dict) -> Tuple[dict, dict]:
+def build_database(data: dict) -> dict:
     subjects_data = {}
     # Parse the JSON file
     for d in data:
@@ -67,17 +82,7 @@ def build_database(data: dict) -> Tuple[dict, dict]:
         groups[group_num] = group
         subjects_data[code] = groups
 
-    # Post process data and extract all the ids
-    groups = {}
-    for subject_key, subject_data in subjects_data.items():
-        groups_ids = []
-        for group_key, group_data in subject_data.items():
-            if len(group_data["subgroups"]) > 0:
-                groups_ids += [group_key*10 + key for key in group_data["subgroups"].keys()]
-            else:
-                groups_ids.append(group_key*10)
-        groups[subject_key] = groups_ids
-    return subjects_data, groups
+    return subjects_data
 
 
 def get_timetable(year: int, semester: int, courses: List[str]):
@@ -94,7 +99,9 @@ def get_timetable(year: int, semester: int, courses: List[str]):
         print(f"No data received, instead {data}")
 
     database = build_database(data["results"])
-    print(database)
+    timetables = get_timetables(database, [], {})
+    print(timetables)
+    print(len(timetables))
 
 
 def get_available_courses(year: int, semester: int) -> List[str]:
@@ -109,7 +116,7 @@ def get_available_courses(year: int, semester: int) -> List[str]:
 
 
 def main(args: dict):
-    get_timetable(2018, 1, ["F", "FM", "IC", "PRO1"])
+    get_timetable(2018, 1, ["F", "FM", "IC", "PRO1", "APA", "PAR", "EC", "IA"])
     get_available_courses(2018, 1)
 
 
