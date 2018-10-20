@@ -22,8 +22,8 @@ logger = logging.getLogger(__name__)
 DONUT_PARROT = 'CgADBAADwgMAAiRlWVKCtPYHjtSx-QI'
 PARTY_PARROT = 'CgADBAADxgMAAiRlWVK7Oa85OWrCqAI'
 
-waiting_timetable = False
-program = re.compile(r"(\d{4})Q(\d) *(\w+(?: *, *\w+)*)")
+selected_semester = None
+courses_program = re.compile(r"(\w+(?: *, *\w+)*)")
 
 
 def get_lab(bot, update):
@@ -43,14 +43,16 @@ def get_lab(bot, update):
     update.message.reply_text('Please choose a lab:', reply_markup=reply_markup)
 
 
-def get_timetable(bot, update):
-    global waiting_timetable
-    update.message.reply_text('Please send the year the quarter (eg 2018Q1) and then the courses separated by commas')
-    waiting_timetable = True
+def get_timetable(bot, update: Update):
+    global selected_semester
+
+    semesters = timetable.get_semesters()
+    buttons = [[InlineKeyboardButton(t, callback_data=t)] for t in semesters]
+    update.message.reply_text("Select the desired semester", reply_markup=InlineKeyboardMarkup(buttons))
 
 
 def parse_messages(bot: Bot, update: Update):
-    global waiting_timetable
+    global selected_semester
     chat_id = update.message.chat.id
 
     if update.message.text.lower() == "biene":
@@ -58,21 +60,19 @@ def parse_messages(bot: Bot, update: Update):
         bot.send_animation(chat_id=chat_id, animation=PARTY_PARROT)
         return
 
-    if not waiting_timetable:
+    if selected_semester is None:
         return
 
     text = update.message.text
-    m = program.match(text)
+    m = courses_program.match(text)
     if not m:
         update.message.reply_text('Pattern not recognized please send it again')
         return
 
-    year = int(m.group(1))
-    semester = int(m.group(2))
-    courses = [s.strip() for s in m.group(3).split(",")]
+    courses = [s.strip() for s in m.group(1).split(",")]
 
     update.message.reply_text(f"Please wait while we search the timetables")
-    available_courses = timetable.get_available_courses(year, semester)
+    available_courses = timetable.get_available_courses(selected_semester)
     difference = set(courses) - set(available_courses)
     if len(difference) > 0:
         update.message.reply_text(f"I do not recognize the following names: {', '.join(difference)}\n"
@@ -80,23 +80,25 @@ def parse_messages(bot: Bot, update: Update):
         return
 
     res = bot.send_animation(chat_id=chat_id, animation=DONUT_PARROT)
-    table = timetable.get_timetable(year, semester, courses, True)
+    table = timetable.get_timetable(selected_semester, courses, True)
     bot.delete_message(chat_id=chat_id, message_id=res.message_id)
 
     if len(table) <= 0:
         update.message.reply_text(emojize("Sorry! No timetable found :cry:", use_aliases=True))
         return
     update.message.reply_text("Click here to see your timetable: \n" + timetable.timetable_to_url(table))
-    waiting_timetable = False
+    selected_semester = None
 
 
 def button(bot: Bot, update: Update):
+    global selected_semester
     query = update.callback_query
+    chat_id = query.message.chat_id
 
     if query.message.text == 'Please choose a lab:':
-        res_wait = bot.send_message(query.message.chat_id,
+        res_wait = bot.send_message(chat_id,
                                     text="Please wait while we search for the available labs")
-        res = bot.send_animation(query.message.chat_id, animation=DONUT_PARROT)
+        res = bot.send_animation(chat_id, animation=DONUT_PARROT)
 
         K = 25
         caption = joinStrings("Sales lliures:", "Sales ocupades:", K) + "\n"
@@ -124,9 +126,9 @@ def button(bot: Bot, update: Update):
                        caption=caption,
                        parse_mode="MARKDOWN")
 
-        # bot.edit_message_(media=avla.lab_image(query.data),
-        #                      chat_id=query.message.chat_id,
-        #                      message_id=query.message.message_id)
+    elif query.message.text == 'Select the desired semester':
+        selected_semester = query.data
+        bot.send_message(chat_id, text="Please the courses IDs separated by commas")
 
 
 def help(bot, update):

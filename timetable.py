@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import argparse
 import requests
+import datetime
 from typing import List, Tuple, Dict
 
 
@@ -133,8 +134,8 @@ def build_database(data: dict) -> dict:
     return subjects_data
 
 
-def get_timetable(year: int, semester: int, courses: List[str], mornings: bool) -> Dict[str, int]:
-    date_str = f"{year}Q{semester}"
+def get_timetable(semester: str, courses: List[str], mornings: bool) -> Dict[str, int]:
+    date_str = f"{semester}"
     res = requests.get(f"{API_URL}quadrimestres/{date_str}/classes/",
                        params={
                            "format": "json",
@@ -155,8 +156,8 @@ def get_timetable(year: int, semester: int, courses: List[str], mornings: bool) 
     return {}
 
 
-def get_available_courses(year: int, semester: int) -> List[str]:
-    date_str = f"{year}Q{semester}"
+def get_available_courses(semester: str) -> List[str]:
+    date_str = f"{semester}"
     res = requests.get(f"{API_URL}quadrimestres/{date_str}/assignatures",
                        params={
                            "format": "json",
@@ -173,6 +174,12 @@ def timetable_to_url(timetable: Dict[str, int]) -> str:
         base_url += f"&a={key}_{value}&a={key}_{group}"
 
     return base_url
+
+
+def get_semesters() -> List[str]:
+    year = datetime.datetime.now().year
+    return [f"{year}Q1", f"{year}Q2"]
+
 
 
 def main(args: dict):
