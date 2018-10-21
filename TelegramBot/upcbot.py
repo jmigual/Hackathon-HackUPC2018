@@ -25,6 +25,19 @@ selected_semester = None
 courses_program = re.compile(r"(\w+(?: *, *\w+)*)")
 
 
+def get_healthy(bot: Bot, update: Update):
+    reply_markup = InlineKeyboardMarkup([
+        [InlineKeyboardButton("Sports options", callback_data="sports")],
+        [InlineKeyboardButton("UPC Cardio", callback_data="cardio")],
+    ])
+    update.message.reply_text(reply_markup=reply_markup, parse_mode="MARKDOWN",
+                              text="By promoting a healthy life, individuals can have a bigger control over their "
+                                   "health and thus improve it. This is an evolutionary concept which comprises "
+                                   "lifestyles and other social and environmental factors.\n\n"
+                                   "This helps individuals to strengthen their skills and capabilities.\n\n"
+                                   "_Select an option to see more information regarding health options at UPC_")
+
+
 def get_lab(bot: Bot, update: Update):
     # query = update.callback_query
     chat_id = update.message.chat.id
@@ -123,6 +136,45 @@ def button(bot: Bot, update: Update):
         bot.delete_message(chat_id=chat_id, message_id=message_id)
         bot.send_message(chat_id, text="Please the courses IDs separated by commas")
 
+    elif query.data == "sports":
+        bot.edit_message_text(chat_id=chat_id, message_id=message_id,
+                              text="The UPC Sports Service, offers sport and health related "
+                                   "activities to the university community. It gives advice for physical activities "
+                                   "inside the UPC Cardio program, which intends to promote the increase of "
+                                   "physical activity among its participants, since it reduces the risk of "
+                                   "cardiovascular diseases.\n\nYou can find more information at the website:\n"
+                                   "https://www.upc.edu/esports")
+    elif query.data == "cardio":
+        new_reply = InlineKeyboardMarkup([
+            [InlineKeyboardButton("Healthy habits", callback_data="healthy_habits")],
+            [InlineKeyboardButton("Cardio friendly restaurants", callback_data="cardio_restaurants")],
+        ])
+        bot.edit_message_text(chat_id=chat_id, message_id=message_id, reply_markup=new_reply, parse_mode="MARKDOWN",
+                              text="UPC offers multiple programs to reduce the risk of cardiovascular diseases. Among"
+                                   "those there are:\n"
+                                   " - *Healthy habits* to improve your life\n"
+                                   " - *Cardio friendly bars and restaurants* that have been aproved for their healthy "
+                                   "menu\n\n_Select an option to receive more information_")
+
+    elif query.data == "healthy_habits":
+        bot.edit_message_text(chat_id=chat_id, message_id=message_id, parse_mode="MARKDOWN",
+                              text="Healthy habits can prevent the appearance of risk factors for cardiovascular "
+                                   "diseases, and in the same way inadequate eating habits, along with other "
+                                   "factors such as a sedentary lifestyle, somking or stress, can facilitate "
+                                   "the development of these disorders. See information for:\n"
+                                   " - [Nutritional habits](https://www.upc.edu/prevencio/ca/promocio-salut/"
+                                   "upc-cardio/canvi-habits/alimentacio)\n"
+                                   " - [Toxic habits](https://www.upc.edu/prevencio/ca/promocio-salut/"
+                                   "upc-cardio/canvi-habits/tabac)\n"
+                                   " - [Physical habits](https://www.upc.edu/prevencio/ca/promocio-salut/"
+                                   "upc-cardio/canvi-habits/activitat-fisica)")
+    elif query.data == "cardio_restaurants":
+        bot.edit_message_text(chat_id=chat_id, message_id=message_id, parse_mode="MARKDOWN",
+                              text="At UPC there are bars and restaurants that are accredited by the [Public Health "
+                                   "Agency of Catalonia](http://www.amed.cat/home.php) in the framework of the "
+                                   "Mediterranean food, a diet that is cardio-healthy.\n\n_More information at:_\n"
+                                   "https://www.upc.edu/prevencio/ca/promocio-salut/upc-cardio/bars-restaurants")
+
 
 def help(bot, update):
     update.message.reply_text("Use /start to test this bot.")
@@ -141,11 +193,12 @@ def main():
     # Create the Updater and pass it your bot's token.
     updater = Updater("771476950:AAGTRsrT7Sewj9RxtJevOi5mnM4heM5GR4k")
 
-    updater.dispatcher.add_handler(CommandHandler('get_lab', get_lab))
     updater.dispatcher.add_handler(CallbackQueryHandler(button))
     updater.dispatcher.add_handler(CommandHandler('help', help))
     updater.dispatcher.add_handler(CommandHandler('biene', biene))
+    updater.dispatcher.add_handler(CommandHandler('get_lab', get_lab))
     updater.dispatcher.add_handler(CommandHandler("get_timetable", get_timetable))
+    updater.dispatcher.add_handler(CommandHandler("get_healthy", get_healthy))
     updater.dispatcher.add_handler(MessageHandler(Filters.text, parse_messages))
 
     updater.dispatcher.add_error_handler(error)
