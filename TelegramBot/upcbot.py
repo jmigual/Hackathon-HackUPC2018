@@ -177,7 +177,18 @@ def button(bot: Bot, update: Update):
 
 
 def help(bot, update):
-    update.message.reply_text("Use /start to test this bot.")
+    text = ("Welcome to the UPC bot. The aim of this bot is to help you find more information "
+            "regarding availability of computer laboratories, the current semester timetables "
+            "or learning about healthy options to maintain a healthy life. You can use the "
+            "following commands:\n\n"
+            " - /help: To show this help\n"
+            " - /get\_lab: To get information regarding available computer labs' spaces\n"
+            " - /get\_timetable: To get a timetable for your courses during this semester\n"
+            " - /get\_healthy: To learn about the options that can help you have a better and "
+            "safer cardiovascular life\n\n"
+            "_Also you can find our easter eggs_ :flushed_face::egg:")
+
+    update.message.reply_text(parse_mode="MARKDOWN", text=emojize(text, use_aliases=False))
 
 
 def biene(bot, update: Update):
@@ -195,6 +206,7 @@ def main():
 
     updater.dispatcher.add_handler(CallbackQueryHandler(button))
     updater.dispatcher.add_handler(CommandHandler('help', help))
+    updater.dispatcher.add_handler(CommandHandler('start', help))
     updater.dispatcher.add_handler(CommandHandler('biene', biene))
     updater.dispatcher.add_handler(CommandHandler('get_lab', get_lab))
     updater.dispatcher.add_handler(CommandHandler("get_timetable", get_timetable))
