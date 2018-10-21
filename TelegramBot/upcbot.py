@@ -134,7 +134,7 @@ def button(bot: Bot, update: Update):
     elif query.message.text == 'Select the desired semester':
         selected_semester[chat_id] = query.data
         bot.delete_message(chat_id=chat_id, message_id=message_id)
-        bot.send_message(chat_id, text="Please the courses IDs separated by commas")
+        bot.send_message(chat_id, text="Please enter the course's IDs separated by commas")
 
     elif query.data == "sports":
         bot.edit_message_text(chat_id=chat_id, message_id=message_id,
@@ -181,10 +181,10 @@ def help(bot, update):
             "regarding availability of computer laboratories, the current semester timetables "
             "or learning about healthy options to maintain a healthy life. You can use the "
             "following commands:\n\n"
-            " - /help: To show this help\n"
-            " - /get\_lab: To get information regarding available computer labs' spaces\n"
-            " - /get\_timetable: To get a timetable for your courses during this semester\n"
-            " - /get\_healthy: To learn about the options that can help you have a better and "
+            " - /help: Show this help\n"
+            " - /get\_lab: Get information regarding available computer labs' spaces\n"
+            " - /get\_timetable: Get a timetable for your courses during this semester\n"
+            " - /get\_healthy: Learn about the options that can help you have a better and "
             "safer cardiovascular life\n\n"
             "_Also you can find our easter eggs_ :flushed_face::egg:")
 
