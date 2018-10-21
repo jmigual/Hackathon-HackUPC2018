@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 DONUT_PARROT = 'CgADBAADwgMAAiRlWVKCtPYHjtSx-QI'
 PARTY_PARROT = 'CgADBAADxgMAAiRlWVK7Oa85OWrCqAI'
 
-selected_semester = None
+selected_semester = {}
 courses_program = re.compile(r"(\w+(?: *, *\w+)*)")
 
 
@@ -50,7 +50,6 @@ def get_lab(bot: Bot, update: Update):
 
 
 def get_timetable(bot, update: Update):
-    global selected_semester
     chat_id = update.message.chat.id
     bot.send_chat_action(chat_id, ChatAction.TYPING)
 
@@ -67,7 +66,8 @@ def parse_messages(bot: Bot, update: Update):
         bot.send_animation(chat_id=chat_id, animation=PARTY_PARROT, caption="BIENE")
         return
 
-    if selected_semester is None:
+    semester = selected_semester.get(chat_id, None)
+    if semester is None:
         return
 
     text = update.message.text
@@ -78,7 +78,7 @@ def parse_messages(bot: Bot, update: Update):
 
     courses = [s.strip() for s in m.group(1).split(",")]
 
-    available_courses = timetable.get_available_courses(selected_semester)
+    available_courses = timetable.get_available_courses(semester)
     difference = set(courses) - set(available_courses)
     if len(difference) > 0:
         update.message.reply_text(f"I do not recognize the following names: {', '.join(difference)}\n"
@@ -88,14 +88,14 @@ def parse_messages(bot: Bot, update: Update):
     res = bot.send_animation(chat_id=chat_id, animation=DONUT_PARROT,
                              caption="Please wait while we search the timetables")
     bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
-    table = timetable.get_timetable(selected_semester, courses, True)
+    table = timetable.get_timetable(semester, courses, True)
     bot.delete_message(chat_id=chat_id, message_id=res.message_id)
 
     if len(table) <= 0:
         update.message.reply_text(emojize("Sorry! No timetable found :cry:", use_aliases=True))
         return
     update.message.reply_text("Click here to see your timetable: \n" + timetable.timetable_to_url(table))
-    selected_semester = None
+    selected_semester[chat_id] = None
 
 
 def button(bot: Bot, update: Update):
@@ -132,7 +132,7 @@ def button(bot: Bot, update: Update):
                                                      caption=caption, parse_mode="MARKDOWN"))
 
     elif query.message.text == 'Select the desired semester':
-        selected_semester = query.data
+        selected_semester[chat_id] = query.data
         bot.delete_message(chat_id=chat_id, message_id=message_id)
         bot.send_message(chat_id, text="Please the courses IDs separated by commas")
 
